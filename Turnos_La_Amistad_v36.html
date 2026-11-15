@@ -83,6 +83,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .day .n{font-weight:700;font-size:14px;display:flex;justify-content:space-between}
 .day .n i{width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;margin-top:5px}
 .cov{font-size:11px;font-weight:600;border-radius:4px;padding:0 3px; background:#e2e8f0; color:#334155;}
+/* New visual improvements */
+.nota-badge {
+  background:#dbeafe; color:#1e40af; font-size:10px; padding:2px 4px; border-radius:4px; margin-left:4px; cursor:help;
+}
+.turno-block { transition: transform 0.15s ease, background-color 0.2s; }
+.turno-block:hover { background:#f1f5f9; }
+@media (max-width:600px) {
+  .cal { grid-template-columns: 1fr; }
+  .day { min-height:auto; }
+}
 .cov.short{background:var(--danger);color:#fff}
 
 /* TABLA CRONOGRAMA */
@@ -385,7 +395,7 @@ input[type="checkbox"]{width:20px;height:20px;margin:0;padding:0;min-width:0}
   <div class="brand">
     <div class="brand-left">
       <h1>Turnos La Amistad</h1>
-      <span class="ver-badge">v36</span>
+      <span class="ver-badge">v38</span>
     </div>
     <div class="brand-right">
       <button class="btn small" id="btn-undo" title="Deshacer último cambio (Ctrl+Z)" disabled style="opacity:0.4;">↺ Deshacer</button>
