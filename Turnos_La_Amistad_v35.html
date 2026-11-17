@@ -864,19 +864,20 @@ function isCajaCorrelativa(rows, cj) {
   let minStartT = Infinity;
   rows.forEach(r => {
     if (r.st !== 'W') return;
-    if (r.sh === 'M' && (+r.caja || 1) === cj) {
-      const fin = mins(r.fin);
+    const c = +(r.caja || r.c || 1);
+    if (r.sh === 'M' && c === cj) {
+      const fin = typeof r.b === 'number' ? r.b : mins(r.fin);
       if (fin > maxEndM) maxEndM = fin;
     }
-    if (r.x && r.x.sh === 'M' && (+r.x.caja || 1) === cj) {
+    if (r.x && r.x.sh === 'M' && +(r.x.caja || 1) === cj) {
       const fin = mins(r.x.fin);
       if (fin > maxEndM) maxEndM = fin;
     }
-    if (r.sh === 'T' && (+r.caja || 1) === cj) {
-      const ini = mins(r.ini);
+    if (r.sh === 'T' && c === cj) {
+      const ini = typeof r.a === 'number' ? r.a : mins(r.ini);
       if (ini < minStartT) minStartT = ini;
     }
-    if (r.x && r.x.sh === 'T' && (+r.x.caja || 1) === cj) {
+    if (r.x && r.x.sh === 'T' && +(r.x.caja || 1) === cj) {
       const ini = mins(r.x.ini);
       if (ini < minStartT) minStartT = ini;
     }
@@ -991,8 +992,7 @@ async function rotarCajas(){
         mov.forEach(r=>it.push({c:asg[r.p.id],sh:r.sh,a:mins(r.ini),b:mins(r.fin)}));
         for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++)
           if(it[i].c===it[j].c&&it[i].sh===it[j].sh&&it[i].a<it[j].b&&it[j].a<it[i].b)sc+=400;
-        const mockRows = it.map(x => ({ st: 'W', sh: x.sh, caja: x.c, ini: hh(x.a), fin: hh(x.b) }));
-        const occ = { m: new Set(), t: new Set(), rows: mockRows };
+        const occ = { m: new Set(), t: new Set(), rows: it.map(x => ({ st: 'W', sh: x.sh, c: x.c, a: x.a, b: x.b })) };
         it.forEach(x => (x.sh === 'M' ? occ.m : occ.t).add(x.c));
         (S.reglas||[]).forEach(g=>{const f=reglaFallas(g,occ,dw);sc+=1000*(g.modo==='alguna'?(f.length?1:0):f.length)});
         mov.forEach(r=>{
