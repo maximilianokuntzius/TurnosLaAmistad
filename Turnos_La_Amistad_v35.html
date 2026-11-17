@@ -858,7 +858,32 @@ function monthDays(){
   const n=new Date(Y,M+1,0).getDate();
   return Array.from({length:n},(_,i)=>new Date(Y,M,i+1, 12, 0, 0));
 }
-/* ---------- reglas de cajas y rotación ---------- */
+/* ---------- correlatividad continua y reglas de cajas ---------- */
+function isCajaCorrelativa(rows, cj) {
+  let maxEndM = -1;
+  let minStartT = Infinity;
+  rows.forEach(r => {
+    if (r.st !== 'W') return;
+    if (r.sh === 'M' && (+r.caja || 1) === cj) {
+      const fin = mins(r.fin);
+      if (fin > maxEndM) maxEndM = fin;
+    }
+    if (r.x && r.x.sh === 'M' && (+r.x.caja || 1) === cj) {
+      const fin = mins(r.x.fin);
+      if (fin > maxEndM) maxEndM = fin;
+    }
+    if (r.sh === 'T' && (+r.caja || 1) === cj) {
+      const ini = mins(r.ini);
+      if (ini < minStartT) minStartT = ini;
+    }
+    if (r.x && r.x.sh === 'T' && (+r.x.caja || 1) === cj) {
+      const ini = mins(r.x.ini);
+      if (ini < minStartT) minStartT = ini;
+    }
+  });
+  return maxEndM !== -1 && minStartT !== Infinity && maxEndM >= minStartT;
+}
+
 function occOf(rows){
   const m=new Set(),t=new Set();
   rows.forEach(r=>{
@@ -866,14 +891,14 @@ function occOf(rows){
     if(r.sh&&r.caja)(r.sh==='M'?m:t).add(+r.caja);
     if(r.x&&r.x.caja)(r.x.sh==='M'?m:t).add(+r.x.caja);
   });
-  return{m,t};
+  return{m,t,rows};
 }
 function reglaFallas(g,occ,dw){
   const w=S.week[dw];
   if(!g.dias.includes(dw)||!w.M||!w.T)return[];
   const cajas=g.cajas.filter(c=>c>=1&&c<=S.cajas);
   if(!cajas.length)return[];
-  const ok=cajas.filter(c=>occ.m.has(c)&&occ.t.has(c));
+  const ok=cajas.filter(c=>isCajaCorrelativa(occ.rows||[], c));
   if(g.modo==='alguna')return ok.length?[]:cajas;
   return cajas.filter(c=>!ok.includes(c));
 }
@@ -966,8 +991,9 @@ async function rotarCajas(){
         mov.forEach(r=>it.push({c:asg[r.p.id],sh:r.sh,a:mins(r.ini),b:mins(r.fin)}));
         for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++)
           if(it[i].c===it[j].c&&it[i].sh===it[j].sh&&it[i].a<it[j].b&&it[j].a<it[i].b)sc+=400;
-        const occ={m:new Set(),t:new Set()};
-        it.forEach(x=>(x.sh==='M'?occ.m:occ.t).add(x.c));
+        const mockRows = it.map(x => ({ st: 'W', sh: x.sh, caja: x.c, ini: hh(x.a), fin: hh(x.b) }));
+        const occ = { m: new Set(), t: new Set(), rows: mockRows };
+        it.forEach(x => (x.sh === 'M' ? occ.m : occ.t).add(x.c));
         (S.reglas||[]).forEach(g=>{const f=reglaFallas(g,occ,dw);sc+=1000*(g.modo==='alguna'?(f.length?1:0):f.length)});
         mov.forEach(r=>{
           const h=last[r.p.id]||[],c=asg[r.p.id];
@@ -1429,7 +1455,7 @@ function buildDayTableHTML(d, isExport = false) {
   for(let cj=1;cj<=S.cajas;cj++){
     const cellM = w.M ? cell('M', cj) : '';
     const cellT = w.T ? cell('T', cj) : '';
-    const isCorrelativa = !!(w.M && w.T && hasShift('M',cj) && hasShift('T',cj));
+    const isCorrelativa = !!(w.M && w.T && isCajaCorrelativa(rows, cj));
     
     const tdM = w.M ? `<td data-cell-sh="M" data-cell-cj="${cj}">${cellM}</td>` : `<td></td>`;
     const tdT = w.T ? `<td data-cell-sh="T" data-cell-cj="${cj}">${cellT}</td>` : `<td></td>`;
@@ -1849,7 +1875,7 @@ function renderPer(){
   const by=DOWS.map((_,i)=>S.people.filter(p=>p.franco===i).map(p=>p.name));
   h+=`<div class="dist"><strong>Francos por día</strong>${DOWS.map((n,i)=>`<div class="d"><span>${n}</span><span class="${by[i].length>1?'x':''}">${by[i].length?esc(by[i].join(', ')):'—'}${by[i].length>1?` (${by[i].length} de franco)`:''}</span></div>`).join('')}</div>`;
   h+=`<div class="dist"><strong>Reglas de cajas (para "Rotar cajas")</strong>
-    <span class="hint">Correlativa = la caja tiene a alguien en Mañana y en Tarde. Solo cuenta en los días donde hay ambos turnos.</span>
+    <span class="hint">Correlativa = la caja tiene cobertura continua sin quedar vacía entre Mañana y Tarde (el turno tarde entra cuando termina la mañana o antes).</span>
     ${(S.reglas||[]).map(g=>`<div class="rg" data-rgid="${g.id}">
       <label>Cajas (ej: 4,5)<input data-rf="cajas" value="${g.cajas.join(',')}"></label>
       <label>Tiene que haber<select data-rf="modo">${opt('alguna','Al menos una correlativa',g.modo)}${opt('todas','Todas correlativas',g.modo)}</select></label>
