@@ -993,14 +993,14 @@ async function rotarCajas(){
         for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++)
           if(it[i].c===it[j].c&&it[i].sh===it[j].sh&&it[i].a<it[j].b&&it[j].a<it[i].b)sc+=2000;
         const fixedBoxes=new Set(fixed.map(f=>f.c));
-        mov.forEach(r=>{if(fixedBoxes.has(asg[r.p.id]))sc+=300;});
+        mov.forEach(r=>{if(fixedBoxes.has(asg[r.p.id]))sc+=700;});
         const occ = { m: new Set(), t: new Set(), rows: it.map(x => ({ st: 'W', sh: x.sh, c: x.c, a: x.a, b: x.b })) };
         it.forEach(x => (x.sh === 'M' ? occ.m : occ.t).add(x.c));
         (S.reglas||[]).forEach(g=>{const f=reglaFallas(g,occ,dw);sc+=1000*(g.modo==='alguna'?(f.length?1:0):f.length)});
         mov.forEach(r=>{
           const h=last[r.p.id]||[],c=asg[r.p.id];
           if(h[0]===c)sc+=30;if(h[1]===c)sc+=12;if(h[2]===c)sc+=6;
-          if(!(r.p.isAC&&acC.includes(c)))sc+=50*rk(c);
+          if(!(r.p.isAC&&acC.includes(c)))sc+=100*rk(c);
           sc+=1*((uso[r.p.id]||{})[c]||0);
         });
         return sc;
