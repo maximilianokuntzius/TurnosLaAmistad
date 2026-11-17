@@ -992,8 +992,10 @@ async function rotarCajas(){
         mov.forEach(r=>it.push({c:asg[r.p.id],sh:r.sh,a:mins(r.ini),b:mins(r.fin)}));
         for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++)
           if(it[i].c===it[j].c&&it[i].sh===it[j].sh&&it[i].a<it[j].b&&it[j].a<it[i].b)sc+=2000;
-        const fixedBoxes=new Set(fixed.map(f=>f.c));
-        mov.forEach(r=>{if(fixedBoxes.has(asg[r.p.id]))sc+=700;});
+        // Penalizar solo cuando hay solapamiento real de horario con persona fija
+        mov.forEach(r=>{const c=asg[r.p.id],a=mins(r.ini),b=mins(r.fin);fixed.forEach(f=>{if(f.c===c&&a<f.b&&f.a<b)sc+=700;});});
+        // Bonus para cajas correlativas: M sale cuando T entra (sin gap), misma caja
+        for(let i=0;i<it.length;i++){if(it[i].sh!=='M')continue;for(let j=0;j<it.length;j++){if(it[j].sh!=='T'||it[i].c!==it[j].c)continue;if(it[i].b>=it[j].a)sc-=200;}}
         const occ = { m: new Set(), t: new Set(), rows: it.map(x => ({ st: 'W', sh: x.sh, c: x.c, a: x.a, b: x.b })) };
         it.forEach(x => (x.sh === 'M' ? occ.m : occ.t).add(x.c));
         (S.reglas||[]).forEach(g=>{const f=reglaFallas(g,occ,dw);sc+=1000*(g.modo==='alguna'?(f.length?1:0):f.length)});
