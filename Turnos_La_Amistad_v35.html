@@ -1000,8 +1000,8 @@ async function rotarCajas(){
         mov.forEach(r=>{
           const h=last[r.p.id]||[],c=asg[r.p.id];
           if(h[0]===c)sc+=30;if(h[1]===c)sc+=12;if(h[2]===c)sc+=6;
-          if(!(r.p.isAC&&acC.includes(c)))sc+=12*rk(c);
-          sc+=2*((uso[r.p.id]||{})[c]||0);
+          if(!(r.p.isAC&&acC.includes(c)))sc+=50*rk(c);
+          sc+=1*((uso[r.p.id]||{})[c]||0);
         });
         return sc;
       };
